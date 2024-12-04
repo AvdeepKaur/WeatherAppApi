@@ -1,24 +1,24 @@
 import logging
 import requests
 
-from meal_max.utils.logger import configure_logger
+from music_collection.utils.logger import configure_logger
 
 logger = logging.getLogger(__name__)
 configure_logger(logger)
 
 
-def get_random() -> float:
+def get_random(num_songs: int) -> int:
     """
-    Fetches a random float number. 
+    Fetches a random int between 1 and the number of songs in the catalog from random.org.
 
-    Returns: 
-       float: The random number fetched from random.org.
-    
+    Returns:
+        int: The random number fetched from random.org.
+
     Raises:
-        ValueError: If the response from random.org is not valid. 
         RuntimeError: If the request to random.org fails or returns an invalid response.
+        ValueError: If the response from random.org is not a valid float.
     """
-    url = "https://www.random.org/decimal-fractions/?num=1&dec=2&col=1&format=plain&rnd=new"
+    url = f"https://www.random.org/integers/?num=1&min=1&max={num_songs}&col=1&base=10&format=plain&rnd=new"
 
     try:
         # Log the request to random.org
@@ -32,7 +32,7 @@ def get_random() -> float:
         random_number_str = response.text.strip()
 
         try:
-            random_number = float(random_number_str)
+            random_number = int(random_number_str)
         except ValueError:
             raise ValueError("Invalid response from random.org: %s" % random_number_str)
 

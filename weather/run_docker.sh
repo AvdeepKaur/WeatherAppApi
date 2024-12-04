@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Variables
-IMAGE_NAME="meal_max"
-CONTAINER_TAG="0.2.0"
+IMAGE_NAME="playlist"
+CONTAINER_TAG="0.0.1"
 HOST_PORT=5001
 CONTAINER_PORT=5000
 DB_VOLUME_PATH="./db"   # Adjust this to the desired host path for the database persistence
