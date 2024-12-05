@@ -1,7 +1,7 @@
 import pytest
 
 from weather.models.favorites_model import PlaylistModel
-from weather.weather.models.location_model import Song
+from weather.weather.models.user_model import Song
 
 
 @pytest.fixture()
