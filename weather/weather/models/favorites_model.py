@@ -1,7 +1,7 @@
 import logging
 from typing import List
-from music_collection.models.song_model import Song, update_play_count
-from music_collection.utils.logger import configure_logger
+from weather.weather.models.location_model import Song, update_play_count
+from weather.utils.logger import configure_logger
 
 logger = logging.getLogger(__name__)
 configure_logger(logger)
@@ -67,22 +67,22 @@ class PlaylistModel:
         self.playlist = [song_in_playlist for song_in_playlist in self.playlist if song_in_playlist.id != song_id]
         logger.info("Song with id %d has been removed", song_id)
 
-    def remove_song_by_track_number(self, track_number: int) -> None:
-        """
-        Removes a song from the playlist by its track number (1-indexed).
+    # def remove_song_by_track_number(self, track_number: int) -> None:
+    #     """
+    #     Removes a song from the playlist by its track number (1-indexed).
 
-        Args:
-            track_number (int): The track number of the song to remove.
+    #     Args:
+    #         track_number (int): The track number of the song to remove.
 
-        Raises:
-            ValueError: If the playlist is empty or the track number is invalid.
-        """
-        logger.info("Removing song at track number %d from playlist", track_number)
-        self.check_if_empty()
-        track_number = self.validate_track_number(track_number)
-        playlist_index = track_number - 1
-        logger.info("Removing song: %s", self.playlist[playlist_index].title)
-        del self.playlist[playlist_index]
+    #     Raises:
+    #         ValueError: If the playlist is empty or the track number is invalid.
+    #     """
+    #     logger.info("Removing song at track number %d from playlist", track_number)
+    #     self.check_if_empty()
+    #     track_number = self.validate_track_number(track_number)
+    #     playlist_index = track_number - 1
+    #     logger.info("Removing song: %s", self.playlist[playlist_index].title)
+    #     del self.playlist[playlist_index]
 
     def clear_playlist(self) -> None:
         """
