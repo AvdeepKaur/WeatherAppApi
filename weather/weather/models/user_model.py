@@ -25,16 +25,17 @@ def create_user(id: str, username: str, email: str, password: str) -> None:
     Creates a new user in the users table.
 
     Args:
-        artist (str): The artist's name.
-        title (str): The song title.
-        year (int): The year the song was released.
-        genre (str): The song genre.
-        duration (int): The duration of the song in seconds.
+        id (str): The user id.
+        username (str): The username of the user.
+        email (str): The email used by the user.
+        password (str): The password associated with the user.
 
     Raises:
-        ValueError: If year or duration are invalid.
-        sqlite3.IntegrityError: If a song with the same compound key (artist, title, year) already exists.
-        sqlite3.Error: For any other database errors.
+        ValueError: If username is invalid.
+        ValueError: If password is invalid.
+        ValueError: If email is invalid
+        ValueError: If username already exists. 
+        sqlite3.Error: Error when creating a database for that user. 
     """
     # Validate the required fields
     ## check if it's in the database?
@@ -67,13 +68,10 @@ def create_user(id: str, username: str, email: str, password: str) -> None:
 
 def get_all_users() -> list[dict]:
     """
-    Retrieves all songs that are not marked as deleted from the catalog.
-
-    Args:
-        sort_by_play_count (bool): If True, sort the songs by play count in descending order.
+    Retrieves all users that have created an account.
 
     Returns:
-        list[dict]: A list of dictionaries representing all non-deleted songs with play_count.
+        list[dict]: A list of dictionaries representing all users.
 
     Logs:
         Warning: If the catalog is empty.
@@ -93,7 +91,7 @@ def get_all_users() -> list[dict]:
             rows = cursor.fetchall()
 
             if not rows:
-                logger.warning("The song catalog is empty.")
+                logger.warning("The user catalog is empty.")
                 return []
 
             users = [
@@ -114,13 +112,14 @@ def get_all_users() -> list[dict]:
 
 def update_password(id: int, new_password: str) -> None:
     """
-    Increments the play count of a song by song ID.
+    Updates password of user by user id.
 
     Args:
-        song_id (int): The ID of the song whose play count should be incremented.
+        id (int): The ID of the user whose password we want to update.
+        new_password(str): The new password we want to replace the old password with. 
 
     Raises:
-        ValueError: If the song does not exist or is marked as deleted.
+        ValueError: If the username with the id does not exist.
         sqlite3.Error: If there is a database error.
     """
     try:
@@ -149,13 +148,14 @@ def update_password(id: int, new_password: str) -> None:
 
 def update_username(id: int, new_username: str) -> None:
     """
-    Increments the play count of a song by song ID.
+    updates the username by user ID.
 
     Args:
-        song_id (int): The ID of the song whose play count should be incremented.
+        id (int): The ID of the user whose username should be updated.
+        new_username(str): The new username we want.
 
     Raises:
-        ValueError: If the song does not exist or is marked as deleted.
+        ValueError: If the user does not exist.
         sqlite3.Error: If there is a database error.
     """
     try:
