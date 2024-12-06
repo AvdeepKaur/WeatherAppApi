@@ -43,11 +43,6 @@ def db_check() -> Response:
         404 error if there is an issue with the database.
     """
 
-    # databases = {
-    #     "users": {"tables": ["users"]},
-    #     "user_favorites": {"tables": ["user_favorites"]}
-    # }
-
     try:
         app.logger.info("Checking database connection...")
         check_database_connection()
@@ -55,11 +50,9 @@ def db_check() -> Response:
         app.logger.info("Checking if users table exists...")
         check_table_exists("users")
         app.logger.info("users table exists.")
-
         app.logger.info("Checking if user_favorites table exists...")
         check_table_exists("user_favorites")
         app.logger.info("user_favorites table exists.")
-
         return make_response(jsonify({'database_status': 'healthy'}), 200)
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 404)
