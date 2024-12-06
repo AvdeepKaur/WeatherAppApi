@@ -49,62 +49,98 @@ check_db() {
 
 ##########################################################
 #
-# Song Management
+# User Management
 #
 ##########################################################
 
-clear_catalog() {
-  echo "Clearing the playlist..."
-  curl -s -X DELETE "$BASE_URL/clear-catalog" | grep -q '"status": "success"'
-}
+add_user() {
+  id=$1
+  username=$2
+  email=$3
+  password=$4
 
-create_song() {
-  artist=$1
-  title=$2
-  year=$3
-  genre=$4
-  duration=$5
-
-  echo "Adding song ($artist - $title, $year) to the playlist..."
-  curl -s -X POST "$BASE_URL/create-song" -H "Content-Type: application/json" \
-    -d "{\"artist\":\"$artist\", \"title\":\"$title\", \"year\":$year, \"genre\":\"$genre\", \"duration\":$duration}" | grep -q '"status": "success"'
+  echo "Adding song ($id - $username, $email) to the playlist..."
+  curl -s -X POST "$BASE_URL/create-user" -H "Content-Type: application/json" \
+    -d "{\"id\":\"$id\", \"username\":\"$username\", \"email\":$email, \"password\":\"$password\"}" | grep -q '"status": "success"'
 
   if [ $? -eq 0 ]; then
-    echo "Song added successfully."
+    echo "User added successfully."
   else
-    echo "Failed to add song."
+    echo "Failed to add user."
     exit 1
   fi
 }
 
-delete_song_by_id() {
-  song_id=$1
-
-  echo "Deleting song by ID ($song_id)..."
-  response=$(curl -s -X DELETE "$BASE_URL/delete-song/$song_id")
+get_all_users() {
+  echo "Getting all users in the db..."
+  response=$(curl -s -X GET "$BASE_URL/get-all-users")
   if echo "$response" | grep -q '"status": "success"'; then
-    echo "Song deleted successfully by ID ($song_id)."
-  else
-    echo "Failed to delete song by ID ($song_id)."
-    exit 1
-  fi
-}
-
-get_all_songs() {
-  echo "Getting all songs in the playlist..."
-  response=$(curl -s -X GET "$BASE_URL/get-all-songs-from-catalog")
-  if echo "$response" | grep -q '"status": "success"'; then
-    echo "All songs retrieved successfully."
+    echo "All users retrieved successfully."
     if [ "$ECHO_JSON" = true ]; then
-      echo "Songs JSON:"
+      echo "Users JSON:"
       echo "$response" | jq .
     fi
   else
-    echo "Failed to get songs."
+    echo "Failed to get users."
     exit 1
   fi
 }
 
+update_password() {
+  id=$1
+  new_password=$2
+
+  echo "Updating password for user with ID $id..."
+  response=$(curl -s -X PUT "$BASE_URL/api/update-password" -H "Content-Type: application/json" \
+    -d "{\"id\": $id, \"new_password\": \"$new_password\"}")
+
+  if echo "$response" | grep -q '"status": "success"'; then
+    echo "Password updated successfully for user ID $id."
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Response JSON:"
+      echo "$response" | jq .
+    fi
+  elif echo "$response" | grep -q '"error":'; then
+    error_message=$(echo "$response" | jq -r '.error')
+    echo "Failed to update password: $error_message"
+    exit 1
+  else
+    echo "Failed to update password due to an unknown error."
+    exit 1
+  fi
+}
+
+update_username() {
+  id=$1
+  new_username=$2
+
+  echo "Updating username for user with ID $id..."
+  response=$(curl -s -X PUT "$BASE_URL/api/update-username" -H "Content-Type: application/json" \
+    -d "{\"id\": $id, \"new_username\": \"$new_username\"}")
+
+  if echo "$response" | grep -q '"status": "success"'; then
+    echo "Username updated successfully for user ID $id."
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Response JSON:"
+      echo "$response" | jq .
+    fi
+  elif echo "$response" | grep -q '"error":'; then
+    error_message=$(echo "$response" | jq -r '.error')
+    echo "Failed to update username: $error_message"
+    exit 1
+  else
+    echo "Failed to update username due to an unknown error."
+    exit 1
+  fi
+}
+
+
+
+############################################################
+#
+# Playlist Management
+#
+############################################################
 get_song_by_id() {
   song_id=$1
 
@@ -122,46 +158,24 @@ get_song_by_id() {
   fi
 }
 
-get_song_by_compound_key() {
-  artist=$1
-  title=$2
-  year=$3
+delete_song_by_id() {
+  song_id=$1
 
-  echo "Getting song by compound key (Artist: '$artist', Title: '$title', Year: $year)..."
-  response=$(curl -s -X GET "$BASE_URL/get-song-from-catalog-by-compound-key?artist=$(echo $artist | sed 's/ /%20/g')&title=$(echo $title | sed 's/ /%20/g')&year=$year")
+  echo "Deleting song by ID ($song_id)..."
+  response=$(curl -s -X DELETE "$BASE_URL/delete-song/$song_id")
   if echo "$response" | grep -q '"status": "success"'; then
-    echo "Song retrieved successfully by compound key."
-    if [ "$ECHO_JSON" = true ]; then
-      echo "Song JSON (by compound key):"
-      echo "$response" | jq .
-    fi
+    echo "Song deleted successfully by ID ($song_id)."
   else
-    echo "Failed to get song by compound key."
-    exit 1
-  fi
-}
-
-get_random_song() {
-  echo "Getting a random song from the catalog..."
-  response=$(curl -s -X GET "$BASE_URL/get-random-song")
-  if echo "$response" | grep -q '"status": "success"'; then
-    echo "Random song retrieved successfully."
-    if [ "$ECHO_JSON" = true ]; then
-      echo "Random Song JSON:"
-      echo "$response" | jq .
-    fi
-  else
-    echo "Failed to get a random song."
+    echo "Failed to delete song by ID ($song_id)."
     exit 1
   fi
 }
 
 
-############################################################
-#
-# Playlist Management
-#
-############################################################
+clear_catalog() {
+  echo "Clearing the playlist..."
+  curl -s -X DELETE "$BASE_URL/clear-catalog" | grep -q '"status": "success"'
+}
 
 add_song_to_playlist() {
   artist=$1
@@ -470,55 +484,19 @@ get_song_leaderboard() {
 check_health
 check_db
 
-# Clear the catalog
-clear_catalog
+# add users
+add_user 0 "JohnDoe" "jdoe@bu.edu" "password123"
+add_user 1 "SarahSmith" "ssmith@bu.edu" "Password456"
+add_user 2 "BobBlack" "bblack@bu.edu" "newPassword123"
+add_user 3 "AbbeyJackson" "ajackson@bu.edu" "goodPassword1234"
 
-# Create songs
-create_song "The Beatles" "Hey Jude" 1968 "Rock" 180
-create_song "The Rolling Stones" "Paint It Black" 1966 "Rock" 180
-create_song "The Beatles" "Let It Be" 1970 "Rock" 180
-create_song "Queen" "Bohemian Rhapsody" 1975 "Rock" 180
-create_song "Led Zeppelin" "Stairway to Heaven" 1971 "Rock" 180
+get_all_users
 
-delete_song_by_id 1
-get_all_songs
+update_password 0 "newSecurePassword"
+update_password 1 "forgotPassword"
 
-get_song_by_id 2
-get_song_by_compound_key "The Beatles" "Let It Be" 1970
-get_random_song
+update_username 0 "jdoe"
+update_username 2 "bobbyblack"
 
-clear_playlist
-
-add_song_to_playlist "The Rolling Stones" "Paint It Black" 1966
-add_song_to_playlist "Queen" "Bohemian Rhapsody" 1975
-add_song_to_playlist "Led Zeppelin" "Stairway to Heaven" 1971
-add_song_to_playlist "The Beatles" "Let It Be" 1970
-
-remove_song_from_playlist "The Beatles" "Let It Be" 1970
-remove_song_by_track_number 2
-
-get_all_songs_from_playlist
-
-add_song_to_playlist "Queen" "Bohemian Rhapsody" 1975
-add_song_to_playlist "The Beatles" "Let It Be" 1970
-
-move_song_to_beginning "The Beatles" "Let It Be" 1970
-move_song_to_end "Queen" "Bohemian Rhapsody" 1975
-move_song_to_track_number "Led Zeppelin" "Stairway to Heaven" 1971 2
-swap_songs_in_playlist 1 2
-
-get_all_songs_from_playlist
-get_song_from_playlist_by_track_number 1
-
-get_playlist_length_duration
-
-play_current_song
-rewind_playlist
-
-play_entire_playlist
-play_current_song
-play_rest_of_playlist
-
-get_song_leaderboard
 
 echo "All tests passed successfully!"
