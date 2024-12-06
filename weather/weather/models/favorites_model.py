@@ -1,6 +1,6 @@
 import logging
 from typing import List
-from weather.weather.models.user_model import Song, update_play_count
+from weather.models.user_model import Song, update_play_count
 from weather.utils.logger import configure_logger
 
 logger = logging.getLogger(__name__)
