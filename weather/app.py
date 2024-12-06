@@ -46,9 +46,14 @@ def db_check() -> Response:
         app.logger.info("Checking database connection...")
         check_database_connection()
         app.logger.info("Database connection is OK.")
-        app.logger.info("Checking if songs table exists...")
-        check_table_exists("songs")
-        app.logger.info("songs table exists.")
+        app.logger.info("Checking if users table exists...")
+        check_table_exists("users")
+        app.logger.info("users table exists.")
+
+        app.logger.info("Checking if user_favorites table exists...")
+        check_table_exists("user_favorites")
+        app.logger.info("user_favorites table exists.")
+
         return make_response(jsonify({'database_status': 'healthy'}), 200)
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 404)
