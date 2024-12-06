@@ -35,20 +35,24 @@ def healthcheck() -> Response:
 @app.route('/api/db-check', methods=['GET'])
 def db_check() -> Response:
     """
-    Route to check if the database connection and songs table are functional.
+    Route to check if multiple database connections and their respective tables are functional.
 
     Returns:
         JSON response indicating the database health status.
     Raises:
         404 error if there is an issue with the database.
     """
+
     try:
         app.logger.info("Checking database connection...")
         check_database_connection()
         app.logger.info("Database connection is OK.")
-        app.logger.info("Checking if songs table exists...")
-        check_table_exists("songs")
-        app.logger.info("songs table exists.")
+        app.logger.info("Checking if users table exists...")
+        check_table_exists("users")
+        app.logger.info("users table exists.")
+        app.logger.info("Checking if user_favorites table exists...")
+        check_table_exists("user_favorites")
+        app.logger.info("user_favorites table exists.")
         return make_response(jsonify({'database_status': 'healthy'}), 200)
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 404)
@@ -56,185 +60,154 @@ def db_check() -> Response:
 
 ##########################################################
 #
-# Song Management
+# User Management
 #
 ##########################################################
 
-@app.route('/api/create-song', methods=['POST'])
-def add_song() -> Response:
+@app.route('/api/create-user', methods=['POST'])
+def add_user() -> Response:
     """
     Route to add a new song to the playlist.
 
     Expected JSON Input:
-        - artist (str): The artist's name.
-        - title (str): The song title.
-        - year (int): The year the song was released.
-        - genre (str): The genre of the song.
-        - duration (int): The duration of the song in seconds.
+        id (str): The user id.
+        username (str): The username of the user.
+        email (str): The email used by the user.
+        password (str): The password associated with the user.
 
     Returns:
-        JSON response indicating the success of the song addition.
+        JSON response indicating the success of the user addition.
+    
     Raises:
         400 error if input validation fails.
-        500 error if there is an issue adding the song to the playlist.
+        500 error if there is an issue adding the user to db.
     """
-    app.logger.info('Adding a new song to the catalog')
+    app.logger.info('Adding a new user to the db')
     try:
         data = request.get_json()
 
-        artist = data.get('artist')
-        title = data.get('title')
-        year = data.get('year')
-        genre = data.get('genre')
-        duration = data.get('duration')
+        id = data.get('id')
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
 
-        if not artist or not title or year is None or not genre or duration is None:
+        if not id or not username or not email  or not password:
             return make_response(jsonify({'error': 'Invalid input, all fields are required with valid values'}), 400)
 
-        # Add the song to the playlist
-        app.logger.info('Adding song: %s - %s', artist, title)
-        user_model.create_song(artist=artist, title=title, year=year, genre=genre, duration=duration)
-        app.logger.info("Song added to playlist: %s - %s", artist, title)
-        return make_response(jsonify({'status': 'success', 'song': title}), 201)
+        # Add the user to the db
+        app.logger.info('Adding user: %s - %s', id, username)
+        user_model.create_song(id=id, username=username, email=email, password=password)
+        app.logger.info("User added to db: %s - %s", id, username)
+        return make_response(jsonify({'status': 'success', 'user': id}), 201)
     except Exception as e:
-        app.logger.error("Failed to add song: %s", str(e))
+        app.logger.error("Failed to add user: %s", str(e))
         return make_response(jsonify({'error': str(e)}), 500)
 
-@app.route('/api/clear-catalog', methods=['DELETE'])
-def clear_catalog() -> Response:
+@app.route('/api/get-all-users', methods=['GET'])
+def get_all_users() -> Response:
     """
-    Route to clear the entire song catalog (recreates the table).
+    Route to retrieve all users in the db.
 
     Returns:
-        JSON response indicating success of the operation or error message.
+        JSON response with the list of users or error message.
     """
     try:
-        app.logger.info("Clearing the song catalog")
-        user_model.clear_catalog()
-        return make_response(jsonify({'status': 'success'}), 200)
+        app.logger.info("Retrieving all users from the db")
+        users = user_model.get_all_users()
+
+        return make_response(jsonify({'status': 'success', 'users': users}), 200)
     except Exception as e:
-        app.logger.error(f"Error clearing catalog: {e}")
+        app.logger.error(f"Error retrieving users: {e}")
         return make_response(jsonify({'error': str(e)}), 500)
 
-@app.route('/api/delete-song/<int:song_id>', methods=['DELETE'])
-def delete_song(song_id: int) -> Response:
+@app.route('/api/update-password', methods=['PUT'])
+def update_password() -> Response:
     """
-    Route to delete a song by its ID (soft delete).
+    Route to update passwords 
 
-    Path Parameter:
-        - song_id (int): The ID of the song to delete.
+    Expected JSON Input:
+        id (int): The ID of the user whose password we want to update.
+        new_password(str): The new password we want to replace the old password with. 
 
     Returns:
-        JSON response indicating success of the operation or error message.
+        JSON response indicating success of password update
+
+    Raises:
+        400 error if input validation fails.
+        404 error if the user ID does not exist.
+        500 error if there is a database error.
     """
     try:
-        app.logger.info(f"Deleting song by ID: {song_id}")
-        user_model.delete_song(song_id)
-        return make_response(jsonify({'status': 'success'}), 200)
-    except Exception as e:
-        app.logger.error(f"Error deleting song: {e}")
-        return make_response(jsonify({'error': str(e)}), 500)
+        app.logger.info("Received request to update password")
+        data = request.get_json()
 
+        id = data.get('id')
+        new_password = data.get('new_password')
 
-@app.route('/api/get-all-songs-from-catalog', methods=['GET'])
-def get_all_songs() -> Response:
-    """
-    Route to retrieve all songs in the catalog (non-deleted), with an option to sort by play count.
+        if not id or not new_password:
+            return make_response(jsonify({'error': 'Invalid input. ID and new_password are required.'}), 400)
 
-    Query Parameter:
-        - sort_by_play_count (bool, optional): If true, sort songs by play count.
-
-    Returns:
-        JSON response with the list of songs or error message.
-    """
-    try:
-        # Extract query parameter for sorting by play count
-        sort_by_play_count = request.args.get('sort_by_play_count', 'false').lower() == 'true'
-
-        app.logger.info("Retrieving all songs from the catalog, sort_by_play_count=%s", sort_by_play_count)
-        songs = user_model.get_all_songs(sort_by_play_count=sort_by_play_count)
-
-        return make_response(jsonify({'status': 'success', 'songs': songs}), 200)
-    except Exception as e:
-        app.logger.error(f"Error retrieving songs: {e}")
-        return make_response(jsonify({'error': str(e)}), 500)
-
-
-@app.route('/api/get-song-from-catalog-by-id/<int:song_id>', methods=['GET'])
-def get_song_by_id(song_id: int) -> Response:
-    """
-    Route to retrieve a song by its ID.
-
-    Path Parameter:
-        - song_id (int): The ID of the song.
-
-    Returns:
-        JSON response with the song details or error message.
-    """
-    try:
-        app.logger.info(f"Retrieving song by ID: {song_id}")
-        song = user_model.get_song_by_id(song_id)
-        return make_response(jsonify({'status': 'success', 'song': song}), 200)
-    except Exception as e:
-        app.logger.error(f"Error retrieving song by ID: {e}")
-        return make_response(jsonify({'error': str(e)}), 500)
-
-@app.route('/api/get-song-from-catalog-by-compound-key', methods=['GET'])
-def get_song_by_compound_key() -> Response:
-    """
-    Route to retrieve a song by its compound key (artist, title, year).
-
-    Query Parameters:
-        - artist (str): The artist's name.
-        - title (str): The song title.
-        - year (int): The year the song was released.
-
-    Returns:
-        JSON response with the song details or error message.
-    """
-    try:
-        # Extract query parameters from the request
-        artist = request.args.get('artist')
-        title = request.args.get('title')
-        year = request.args.get('year')
-
-        if not artist or not title or not year:
-            return make_response(jsonify({'error': 'Missing required query parameters: artist, title, year'}), 400)
-
-        # Attempt to cast year to an integer
+        # Call the update_password function
+        app.logger.info("Updating password for user with ID %d", id)
         try:
-            year = int(year)
-        except ValueError:
-            return make_response(jsonify({'error': 'Year must be an integer'}), 400)
+            user_model.update_password(id=id, new_password=new_password)
+        except ValueError as ve:
+            app.logger.error(str(ve))
+            return make_response(jsonify({'error': str(ve)}), 404)
 
-        app.logger.info(f"Retrieving song by compound key: {artist}, {title}, {year}")
-        song = user_model.get_song_by_compound_key(artist, title, year)
-        return make_response(jsonify({'status': 'success', 'song': song}), 200)
+        app.logger.info("Password updated successfully for user with ID %d", id)
+        return make_response(jsonify({'status': 'success', 'message': f'Password updated for user ID {id}'}), 200)
 
     except Exception as e:
-        app.logger.error(f"Error retrieving song by compound key: {e}")
-        return make_response(jsonify({'error': str(e)}), 500)
+        app.logger.error("An unexpected error occurred: %s", str(e))
+        return make_response(jsonify({'error': 'An unexpected error occurred.'}), 500)
 
-@app.route('/api/get-random-song', methods=['GET'])
-def get_random_song() -> Response:
+@app.route('/api/update-username', methods=['PUT'])
+def update_username() -> Response:
     """
-    Route to retrieve a random song from the catalog.
+    Route to update passwords 
+
+    Expected JSON Input:
+        id (int): The ID of the user whose username we want to update.
+        new_username(str): The new username we want to replace the old username with. 
 
     Returns:
-        JSON response with the details of a random song or error message.
+        JSON response indicating success of username update
+
+    Raises:
+        400 error if input validation fails.
+        404 error if the user ID does not exist.
+        500 error if there is a database error.
     """
     try:
-        app.logger.info("Retrieving a random song from the catalog")
-        song = user_model.get_random_song()
-        return make_response(jsonify({'status': 'success', 'song': song}), 200)
+        app.logger.info("Received request to update username")
+        data = request.get_json()
+
+        id = data.get('id')
+        new_username = data.get('new_username')
+
+        if not id or not new_username:
+            return make_response(jsonify({'error': 'Invalid input. ID and new_username are required.'}), 400)
+
+        # Call the update_password function
+        app.logger.info("Updating password for user with ID %d", id)
+        try:
+            user_model.update_username(id=id, new_username=new_username)
+        except ValueError as ve:
+            app.logger.error(str(ve))
+            return make_response(jsonify({'error': str(ve)}), 404)
+
+        app.logger.info("Username updated successfully for user with ID %d", id)
+        return make_response(jsonify({'status': 'success', 'message': f'Username updated for user ID {id}'}), 200)
+
     except Exception as e:
-        app.logger.error(f"Error retrieving a random song: {e}")
-        return make_response(jsonify({'error': str(e)}), 500)
+        app.logger.error("An unexpected error occurred: %s", str(e))
+        return make_response(jsonify({'error': 'An unexpected error occurred.'}), 500)
 
 
 ############################################################
 #
-# Playlist Management
+# Favorites Management
 #
 ############################################################
 
