@@ -115,7 +115,7 @@ def test_get_all_users(mock_cursor):
        (2, "user B", "emailB@gmail.com", "PasswordB"),
        (3, "user C", "emailC@gmail.com", "PasswordC")
    ]
-   songs = get_all_songs()
+   users = get_all_users()
 
 
    expected_result = [
