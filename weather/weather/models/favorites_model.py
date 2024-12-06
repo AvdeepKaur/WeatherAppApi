@@ -110,16 +110,6 @@ class FavoritesModel:
         user.favorite_locations = [loc for loc in user.favorite_locations if loc != location]
         logger.info(f"Removed location {location} from favorites for user {user_id}")
 
-
-    def clear_locations(self) -> None:
-        """
-        Clears all locations from the favorites. If the favorites is already empty, logs a warning.
-        """
-        logger.info("Clearing Favorites")
-        if self.get_favorites_length() == 0:
-            logger.warning("Clearing an empty favorites folder")
-        self.favorites.clear()
-
     def get_favorite_locations(self, user_id: int) -> List[Dict]:
         """
         Retrieves all favorite locations for a user.
@@ -135,9 +125,9 @@ class FavoritesModel:
     
     def get_favorites_length(self) -> int:
         """
-        Returns the number of locations in the favorites.
+        Returns the total number of favorite locations across all users.
         """
-        return len(self.favorites)
+        return sum(len(user.favorite_locations) for user in self.users)
     
     ##################################################
     # Weather Data Management Functions
@@ -183,11 +173,11 @@ class FavoritesModel:
 
     def check_if_empty(self) -> None:
         """
-        Checks if the favorites is empty, logs an error, and raises a ValueError if it is.
+        Checks if there are any users with favorite locations.
 
         Raises:
-            ValueError: If the favorites is empty.
+            ValueError: If there are no users or no favorite locations.
         """
-        if not self.playlist:
-            logger.error("Favorites is empty")
-            raise ValueError("Favorites is empty")
+        if not self.users or all(len(user.favorite_locations) == 0 for user in self.users):
+            logger.error("No favorite locations found")
+            raise ValueError("No favorite locations found")

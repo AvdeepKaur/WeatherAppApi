@@ -68,7 +68,7 @@ def test_add_favorite_location(favorites_model, sample_user1, sample_location1):
     assert len(favorites_model.get_favorite_locations(1)) == 1
     assert favorites_model.get_favorite_locations(1)[0] == sample_location1
 
-def test_add_duplicate_favorite_location(favorites_model, sample_user1, sample_location1):
+def test_add_duplicate_location(favorites_model, sample_user1, sample_location1):
     """Test error when adding a duplicate favorite location for a user."""
     favorites_model.add_user(sample_user1)
     favorites_model.add_favorite_location(1, sample_location1)
@@ -116,7 +116,7 @@ def test_update_weather_data(favorites_model, sample_user1, sample_location1, mo
 # Utility Function Test Cases
 ##################################################
 
-def test_check_if_empty_non_empty_favorites(favorites_model, sample_user1, sample_location1):
+def test_check_if_empty_with_full_favorites(favorites_model, sample_user1, sample_location1):
     """Test check_if_empty does not raise error if favorites is not empty."""
     favorites_model.add_user(sample_user1)
     favorites_model.add_favorite_location(1, sample_location1)
@@ -125,9 +125,9 @@ def test_check_if_empty_non_empty_favorites(favorites_model, sample_user1, sampl
     except ValueError:
         pytest.fail("check_if_empty raised ValueError unexpectedly on non-empty favorites")
 
-def test_check_if_empty_empty_favorites(favorites_model):
+def test_check_if_empty_with_empty_favorites(favorites_model):
     """Test check_if_empty raises error when favorites is empty."""
-    with pytest.raises(ValueError, match="Favorites is empty"):
+    with pytest.raises(ValueError, match="No favorite locations found"):
         favorites_model.check_if_empty()
 
 def test_get_favorites_length(favorites_model, sample_user1, sample_location1, sample_location2):
