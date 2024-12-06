@@ -2,7 +2,7 @@ import logging
 from typing import List, Dict
 
 import requests
-from weather.weather.models.user_model import User
+from weather.models.user_model import User
 from weather.utils.logger import configure_logger
 from weather.utils.geocoding_utils import get_latitude_longitude
 
