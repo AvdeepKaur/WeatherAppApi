@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
 from flask import Flask, jsonify, make_response, Response, request
 
-from weather.models.user_model import user
-from weather.models.favorites_model import PlaylistModel
+from weather.models.user_model import User
+from weather.models.favorites_model import FavoritesModel
 from weather.utils.sql_utils import check_database_connection, check_table_exists
 
 
@@ -11,7 +11,8 @@ load_dotenv()
 
 app = Flask(__name__)
 
-playlist_model = PlaylistModel()
+##playlist_model = PlaylistModel()
+favorites_model = FavoritesModel()
 
 
 ####################################################
