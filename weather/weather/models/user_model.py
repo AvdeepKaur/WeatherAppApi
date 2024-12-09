@@ -44,16 +44,15 @@ def create_user(id: str, username: str, email: str, password: str) -> None:
         raise ValueError(f"Invalid username type provided: {username}.")
     if not isinstance(password, str) or len(password) <= 8:
         raise ValueError(f"Invalid password length: {len(password)} (must be longer than 8 characters).")
-    if not isinstance(email, str) or '@' in email:
+    if not isinstance(email, str) or '@' not in email:
         raise ValueError(f"Invalid email.")
 
     try:
-        # Use the context manager to handle the database connection
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO users (username, email, password)
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?)
             """, (username, email, password))
             conn.commit()
 
@@ -126,21 +125,18 @@ def update_password(id: int, new_password: str) -> None:
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            logger.info("Attempting to update password for username with ID %d", id)
+            logger.info("Attempting to update password for user with ID %d", id)
 
-            # Check if the song exists and if it's deleted
-            try: 
-                cursor.execute("SELECT username FROM users WHERE id = ?", (id))
-            except TypeError:
-                logger.info("Username with ID %d not found", id)
-                raise ValueError(f"Username with ID {id} not found")
-            
+            cursor.execute("SELECT username FROM users WHERE id = ?", (id,))
+            result = cursor.fetchone()
+            if result is None:
+                logger.info("User with ID %d not found", id)
+                raise ValueError(f"No user found with id {id}.")
 
-            # Increment the play count
-            cursor.execute("UPDATE password SET password = %s WHERE id = %s", (new_password, id))
+            cursor.execute("UPDATE users SET password = ? WHERE id = ?", (new_password, id))
             conn.commit()
 
-            logger.info("Password for user with ID: %d", id)
+            logger.info("Password updated for user with ID: %d", id)
 
     except sqlite3.Error as e:
         logger.error("Database error while updating password for user with ID %d: %s", id, str(e))
@@ -149,11 +145,11 @@ def update_password(id: int, new_password: str) -> None:
 
 def update_username(id: int, new_username: str) -> None:
     """
-    updates the username by user ID.
+    Updates the username by user ID.
 
     Args:
         id (int): The ID of the user whose username should be updated.
-        new_username(str): The new username we want.
+        new_username (str): The new username we want.
 
     Raises:
         ValueError: If the user does not exist.
@@ -162,23 +158,20 @@ def update_username(id: int, new_username: str) -> None:
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            logger.info("Attempting to update username for email with ID %d", id)
+            logger.info("Attempting to update username for user with ID %d", id)
 
-            # Check if the song exists and if it's deleted
-            try: 
-                cursor.execute("SELECT email FROM users WHERE id = ?", (id))
-            except TypeError:
-                logger.info("Email with ID %d not found", id)
-                raise ValueError(f"Email with ID {id} not found")
-            
+            cursor.execute("SELECT username FROM users WHERE id = ?", (id,))
+            user = cursor.fetchone()
 
-            # Increment the play count
+            if user is None:
+                logger.info("User with ID %d not found", id)
+                raise ValueError(f"No user found with id {id}.")
+
             cursor.execute("UPDATE username SET username = %s WHERE id = %s", (new_username, id))
             conn.commit()
 
-            logger.info("Password for user with ID: %d", id)
+            logger.info("Username updated for user with ID: %d", id)
 
     except sqlite3.Error as e:
-        logger.error("Database error while updating password for user with ID %d: %s", id, str(e))
+        logger.error("Database error while updating username for user with ID %d: %s", id, str(e))
         raise e
-
