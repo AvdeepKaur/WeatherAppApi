@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 import os
 import sqlite3
@@ -13,11 +13,12 @@ configure_logger(logger)
 
 
 @dataclass
-class user:
+class User:
     id: int
     username: str
     email: str
     password: str
+    favorite_locations: List[Dict] = field(default_factory=list)
 
 
 def create_user(id: str, username: str, email: str, password: str) -> None:
