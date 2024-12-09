@@ -214,68 +214,6 @@ def update_username() -> Response:
 #
 ############################################################
 
-@app.route('/api/add-user', methods=['POST'])
-def add_user() -> Response:
-    try:
-        data = request.get_json()
-        username = data.get('username')
-        email = data.get('email')
-        password = data.get('password')
-
-        if not username or not email or not password:
-            return make_response(jsonify({'error': 'Invalid input. Username, email, and password are required.'}), 400)
-
-        user = User(username=username, email=email, password=password, favorite_locations=[])
-        favorites_model.add_user(user)
-
-        logger.info(f"User added: {username}")
-        return make_response(jsonify({'status': 'success', 'message': f'User {username} added successfully.'}), 201)
-
-    except Exception as e:
-        logger.error(f"Error adding user: {e}")
-        return make_response(jsonify({'error': str(e)}), 500)
-
-
-@app.route('/api/remove-user', methods=['DELETE'])
-def remove_user() -> Response:
-    try:
-        data = request.get_json()
-        user_id = data.get('user_id')
-
-        if not user_id:
-            return make_response(jsonify({'error': 'User ID is required.'}), 400)
-
-        favorites_model.remove_user(user_id)
-
-        logger.info(f"User removed: {user_id}")
-        return make_response(jsonify({'status': 'success', 'message': f'User {user_id} removed successfully.'}), 200)
-
-    except Exception as e:
-        logger.error(f"Error removing user: {e}")
-        return make_response(jsonify({'error': str(e)}), 500)
-
-
-@app.route('/api/get-user', methods=['GET'])
-def get_user() -> Response:
-    try:
-        user_id = request.args.get('user_id', type=int)
-
-        if not user_id:
-            return make_response(jsonify({'error': 'User ID is required.'}), 400)
-
-        user = favorites_model.get_user(user_id)
-
-        return make_response(jsonify({
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'favorite_locations': user.favorite_locations
-        }), 200)
-
-    except Exception as e:
-        logger.error(f"Error getting user: {e}")
-        return make_response(jsonify({'error': str(e)}), 500)
-
 
 @app.route('/api/add-favorite-location', methods=['POST'])
 def add_favorite_location() -> Response:
@@ -373,31 +311,6 @@ def check_if_empty() -> Response:
     except Exception as e:
         logger.error(f"Error checking if empty: {e}")
         return make_response(jsonify({'error': str(e)}), 500)
-
-
-# ############################################################
-# #
-# # Leaderboard / Stats
-# #
-# ############################################################
-
-# @app.route('/api/song-leaderboard', methods=['GET'])
-# def get_song_leaderboard() -> Response:
-#     """
-#     Route to get a list of all sorted by play count.
-
-#     Returns:
-#         JSON response with a sorted leaderboard of songs.
-#     Raises:
-#         500 error if there is an issue generating the leaderboard.
-#     """
-#     try:
-#         app.logger.info("Generating song leaderboard sorted")
-#         leaderboard_data = user_model.get_all_songs(sort_by_play_count=True)
-#         return make_response(jsonify({'status': 'success', 'leaderboard': leaderboard_data}), 200)
-#     except Exception as e:
-#         app.logger.error(f"Error generating leaderboard: {e}")
-#         return make_response(jsonify({'error': str(e)}), 500)
 
 
 if __name__ == '__main__':
