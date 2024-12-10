@@ -11,10 +11,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-##playlist_model = PlaylistModel()
-# favorites_model = FavoritesModel()
 
-# favorites_model = FavoritesModel()
 favorites_model = FavoritesModel('./db/user_catalog.db')
 
 
@@ -71,7 +68,7 @@ def db_check() -> Response:
 @app.route('/api/create-user', methods=['POST'])
 def add_user() -> Response:
     """
-    Route to add a new song to the playlist.
+    Route to add a new user to the users.
 
     Expected JSON Input:
         id (str): The user id.
@@ -169,7 +166,7 @@ def update_user_password() -> Response:
 @app.route('/api/update-username', methods=['PUT'])
 def update_user_username() -> Response:
     """
-    Route to update passwords 
+    Route to update usernames 
 
     Expected JSON Input:
         id (int): The ID of the user whose username we want to update.
@@ -216,27 +213,24 @@ def update_user_username() -> Response:
 ############################################################
 
 
-# @app.route('/api/add-favorite-location', methods=['POST'])
-# def add_favorite_location() -> Response:
-#     try:
-#         data = request.get_json()
-#         user_id = data.get('user_id')
-#         location = data.get('location')
-
-#         if not user_id or not location:
-#             return make_response(jsonify({'error': 'User ID and location are required.'}), 400)
-
-#         favorites_model.add_favorite_location(user_id, location)
-
-#         app.logger.info(f"Added favorite location {location} for user {user_id}")
-#         return make_response(jsonify({'status': 'success', 'message': 'Location added to favorites.'}), 201)
-
-#     except Exception as e:
-#         app.logger.error(f"Error adding favorite location: {e}")
-#         return make_response(jsonify({'error': str(e)}), 500)
 
 @app.route('/api/add-favorite-location', methods=['POST'])
 def add_favorite_location() -> Response:
+    """
+    Route to add favorite location
+
+    Expected JSON Input:
+        user_id (int): The ID of the user adding the favorite location.
+        location (dict): The location to be added as a favorite.
+
+    Returns:
+        JSON response indicating success of adding the favorite location.
+
+    Raises:
+        400 error if input validation fails.
+        404 error if the user ID does not exist.
+        500 error if there is an unexpected error.
+    """
     try:
         data = request.get_json()
         user_id = data.get('user_id')
@@ -246,7 +240,7 @@ def add_favorite_location() -> Response:
             return jsonify({'error': 'User ID and location are required.'}), 400
 
         try:
-            favorites_model.get_user(user_id)  # This will raise ValueError if user not found
+            favorites_model.get_user(user_id)  
             favorites_model.add_favorite_location(user_id, location)
         except ValueError as ve:
             app.logger.error(f"Error adding favorite location: {ve}")
@@ -261,6 +255,20 @@ def add_favorite_location() -> Response:
 
 @app.route('/api/remove-favorite-location', methods=['DELETE'])
 def remove_favorite_location() -> Response:
+    """
+    Route to remove favorite location from user. 
+    Expected JSON Input:
+        user_id (int): The ID of the user removing the favorite location.
+        location (dict): The location to be removed from favorites.
+
+    Returns:
+        JSON response indicating success of removing the favorite location.
+
+    Raises:
+        400 error if input validation fails.
+        404 error if the user ID does not exist or the location is not found.
+        500 error if there is an unexpected error.
+    """
     try:
         data = request.get_json()
         user_id = data.get('user_id')
@@ -281,6 +289,18 @@ def remove_favorite_location() -> Response:
 
 @app.route('/api/get-favorite-locations/<int:user_id>', methods=['GET'])
 def get_favorite_locations(user_id: int) -> Response:
+    """
+    Route to retrieve all favorite locations for a specific user.
+
+    Args:
+        user_id (int): The ID of the user whose favorite locations are to be retrieved.
+
+    Returns:
+        Response: A JSON response containing the status and the list of favorite locations if successful.
+
+    Raises:
+        404 error if the user ID does not exist or has no favorite locations.
+        500 error if there is an unexpected error."""
     try:
         locations = favorites_model.get_favorite_locations(user_id)
         return jsonify({'status': 'success', 'favorite_locations': locations}), 200
@@ -294,6 +314,20 @@ def get_favorite_locations(user_id: int) -> Response:
 
 @app.route('/api/get_favorites_length', methods=['GET'])
 def get_favorites_length() -> Response:
+    """
+    Route to retrieve all favorite locations for a specific user.
+
+    Args:
+        user_id (int): The ID of the user whose favorite locations are to be retrieved.
+
+    Returns:
+        Response: A JSON response containing the status and the list of favorite locations if successful.
+
+    Raises:
+        404 error if the user ID does not exist or has no favorite locations.
+        500 error if there is an unexpected error.
+    """
+    
     try:
         length = favorites_model.get_favorites_length()
         return make_response(jsonify({'favorites_length': length}), 200)
@@ -305,6 +339,17 @@ def get_favorites_length() -> Response:
 
 @app.route('/api/update_weather_data/<int:user_id>', methods=['POST'])
 def update_weather_data(user_id) -> Response:
+    """Route to update weather data for all favorite locations of a user.
+    Args:
+        user_id (int): The ID of the user whose weather data needs to be updated.
+
+    Returns:
+        Response: A JSON response indicating the success or failure of the weather data update.
+
+    Raises:
+        404 error if the user ID does not exist or has no favorite locations.
+        500 error if there is an unexpected error during the weather data update.
+    """
     try:
         favorites_model.update_weather_data(user_id)
 
@@ -322,6 +367,14 @@ def update_weather_data(user_id) -> Response:
 
 @app.route('/api/check-if-empty', methods=['GET'])
 def check_if_empty() -> Response:
+    """
+    Route to check if there are any favorite locations across all users.
+    Returns:
+        Response: A JSON response indicating whether favorites are empty or not.
+
+    Raises:
+        500 error if there is an unexpected error during the check.
+    """
     try:
         favorites_model.check_if_empty()
         return make_response(jsonify({'status': 'success', 'message': 'Favorites are not empty.'}), 200)
