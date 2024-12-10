@@ -59,9 +59,9 @@ add_user() {
   email=$3
   password=$4
 
-  echo "Adding song ($id - $username, $email) to the playlist..."
+  echo "Adding user ($id - $username, $email) to the system..."
   curl -s -X POST "$BASE_URL/create-user" -H "Content-Type: application/json" \
-    -d "{\"id\":\"$id\", \"username\":\"$username\", \"email\":$email, \"password\":\"$password\"}" | grep -q '"status": "success"'
+    -d "{\"id\":\"$id\", \"username\":\"$username\", \"email\":\"$email\", \"password\":\"$password\"}" | grep -q '"status": "success"'
 
   if [ $? -eq 0 ]; then
     echo "User added successfully."

@@ -4,7 +4,7 @@ from flask import Flask, jsonify, make_response, Response, request
 from weather.models.user_model import User
 from weather.models.favorites_model import FavoritesModel
 from weather.utils.sql_utils import check_database_connection, check_table_exists
-
+from weather.models.user_model import User, create_user, get_all_users, update_password, update_username
 
 # Load environment variables from .env file
 load_dotenv()
@@ -99,7 +99,7 @@ def add_user() -> Response:
 
         # Add the user to the db
         app.logger.info('Adding user: %s - %s', id, username)
-        user_model.create_song(id=id, username=username, email=email, password=password)
+        create_user(id=id, username=username, email=email, password=password)
         app.logger.info("User added to db: %s - %s", id, username)
         return make_response(jsonify({'status': 'success', 'user': id}), 201)
     except Exception as e:
@@ -116,7 +116,7 @@ def get_all_users() -> Response:
     """
     try:
         app.logger.info("Retrieving all users from the db")
-        users = user_model.get_all_users()
+        users = get_all_users_from_db()
 
         return make_response(jsonify({'status': 'success', 'users': users}), 200)
     except Exception as e:
@@ -153,7 +153,7 @@ def update_password() -> Response:
         # Call the update_password function
         app.logger.info("Updating password for user with ID %d", id)
         try:
-            user_model.update_password(id=id, new_password=new_password)
+            update_password(id=id, new_password=new_password)
         except ValueError as ve:
             app.logger.error(str(ve))
             return make_response(jsonify({'error': str(ve)}), 404)
@@ -195,7 +195,7 @@ def update_username() -> Response:
         # Call the update_password function
         app.logger.info("Updating password for user with ID %d", id)
         try:
-            user_model.update_username(id=id, new_username=new_username)
+            update_username(id=id, new_username=new_username)
         except ValueError as ve:
             app.logger.error(str(ve))
             return make_response(jsonify({'error': str(ve)}), 404)
