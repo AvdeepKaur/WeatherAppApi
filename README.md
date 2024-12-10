@@ -5,8 +5,8 @@ This application allows users to sign up and create accounts to view weather in 
 -------------------------------
 
 ### Route: /api/health 
-** Request Type: ** GET 
-Purpose: Verifies that the service is running and returns the health status. < br / >
+**Request Type:** GET  
+**Purpose:** Verifies that the service is running and returns the health status.  
 
 Response Format: JSON
 Success Response Example:
