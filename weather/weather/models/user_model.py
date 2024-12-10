@@ -7,6 +7,8 @@ from typing import List, Dict
 from weather.utils.logger import configure_logger
 from weather.utils.sql_utils import get_db_connection
 
+import bcrypt
+
 
 logger = logging.getLogger(__name__)
 configure_logger(logger)
@@ -18,6 +20,7 @@ class User:
     username: str
     email: str
     password: str
+    salt: str
     favorite_locations: List[Dict] = field(default_factory=list)
 
 
@@ -30,6 +33,7 @@ def create_user(id: str, username: str, email: str, password: str) -> None:
         username (str): The username of the user.
         email (str): The email used by the user.
         password (str): The password associated with the user.
+        salt (str): Password salt to decode.
 
     Raises:
         ValueError: If username is invalid.
@@ -46,14 +50,17 @@ def create_user(id: str, username: str, email: str, password: str) -> None:
         raise ValueError(f"Invalid password length: {len(password)} (must be longer than 8 characters).")
     if not isinstance(email, str) or '@' not in email:
         raise ValueError(f"Invalid email.")
-
+    
     try:
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO users (username, email, password)
-                VALUES (?, ?, ?)
-            """, (username, email, password))
+                INSERT INTO users (username, email, password, salt)
+                VALUES (?, ?, ?, ?)
+            """, (username, email, hashed_password.decode('utf-8'), salt.decode('utf-8')))
             conn.commit()
 
             logger.info("User created successfully: %s", username)
@@ -132,8 +139,14 @@ def update_password(id: int, new_password: str) -> None:
             if result is None:
                 logger.info("User with ID %d not found", id)
                 raise ValueError(f"No user found with id {id}.")
+            
+            salt = bcrypt.gensalt()
+            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), salt)
 
-            cursor.execute("UPDATE users SET password = ? WHERE id = ?", (new_password, id))
+            cursor.execute(
+                "UPDATE users SET password = ?, salt = ? WHERE id = ?",
+                (hashed_password.decode('utf-8'), salt.decode('utf-8'), id)
+            )
             conn.commit()
 
             logger.info("Password updated for user with ID: %d", id)
