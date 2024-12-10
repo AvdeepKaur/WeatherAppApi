@@ -116,7 +116,7 @@ def get_all_users() -> Response:
     """
     try:
         app.logger.info("Retrieving all users from the db")
-        users = get_all_users_from_db()
+        users = get_all_users()
 
         return make_response(jsonify({'status': 'success', 'users': users}), 200)
     except Exception as e:
