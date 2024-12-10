@@ -8,10 +8,10 @@ This application allows users to sign up and create accounts to view weather in 
 **Request Type:** GET  
 **Purpose:** Verifies that the service is running and returns the health status.  
 
-Response Format: JSON
-Success Response Example:
-Code: 200
-Content: { "status": "healthy" }
+Response Format: JSON  
+Success Response Example:  
+Code: 200  
+Content: { "status": "healthy" }  
 
 Example Request:
 GET /api/health HTTP/1.1
