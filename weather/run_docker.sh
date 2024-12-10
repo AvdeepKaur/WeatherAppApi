@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-IMAGE_NAME="location"
+IMAGE_NAME="weatherapp"
 CONTAINER_TAG="0.0.1"
 HOST_PORT=5001
 CONTAINER_PORT=5000

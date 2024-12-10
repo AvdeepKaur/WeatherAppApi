@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from weather.models.user_model import (
-    user,
+    User,
     create_user,
     get_all_users,
     update_password,
@@ -234,7 +234,7 @@ def test_update_username(mock_cursor):
     update_username(user_id, new_username)
 
     expected_query = normalize_whitespace(
-        "UPDATE username SET username = %s WHERE id = %s"
+        "UPDATE users SET username = ? WHERE id = ?"
     )
     actual_query = normalize_whitespace(
         mock_cursor.execute.call_args_list[1][0][0]

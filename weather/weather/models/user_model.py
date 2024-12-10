@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 import os
 import sqlite3
@@ -15,12 +15,13 @@ configure_logger(logger)
 
 
 @dataclass
-class user:
+class User:
     id: int
     username: str
     email: str
     password: str
     salt: str
+    favorite_locations: List[Dict] = field(default_factory=list)
 
 
 def create_user(id: str, username: str, email: str, password: str) -> None:
@@ -179,7 +180,7 @@ def update_username(id: int, new_username: str) -> None:
                 logger.info("User with ID %d not found", id)
                 raise ValueError(f"No user found with id {id}.")
 
-            cursor.execute("UPDATE username SET username = %s WHERE id = %s", (new_username, id))
+            cursor.execute("UPDATE users SET username = ? WHERE id = ?", (new_username, id))
             conn.commit()
 
             logger.info("Username updated for user with ID: %d", id)
