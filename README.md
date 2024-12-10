@@ -18,88 +18,88 @@ GET /api/health HTTP/1.1
 Host: yourservice.com  
   
 Example Response:  
-{
-"status": "healthy"
-}
+{  
+"status": "healthy"  
+}  
   
 ---  
   
-Route: /api/db-check
-Request Type: GET
-Purpose: Checks the health of database connections and verifies the existence of required tables (users and user_favorites).
+Route: /api/db-check  
+Request Type: GET  
+Purpose: Checks the health of database connections and verifies the existence of required tables (users and user_favorites).  
+  
+Request Body: None  
 
-Request Body: None
-
-Response Format: JSON
-Success Response Example:
-Code: 200
-Content: { "database_status": "healthy" }
-
-Example Request:
-GET /api/db-check HTTP/1.1
-Host: yourservice.com
-
-Example Success Response:
-{
-"database_status": "healthy"
-}
-
----
-
-Route: /api/create-user
-Request Type: POST
-Purpose: Creates a new user and adds the user to the database.
-
-Request Body:
-    id (String): The unique ID of the user.
-    username (String): The username of the user.
-    email (String): The email of the user.
-    password (String): The password for the user.
-
-Response Format: JSON
-Success Response Example:
-Code: 201
-Content: { "status": "success", "user": "<user_id>" }
-
-Example Request:
-POST /api/create-user HTTP/1.1
-Host: yourservice.com
-Content-Type: application/json
-{
-"id": "12345",
-"username": "johndoe",
-"email": "johndoe@example.com",
-"password": "securepassword"
-}
-
-Example Success Response:
-{
-"status": "success",
-"user": "12345"
-}
+Response Format: JSON  
+Success Response Example:  
+Code: 200  
+Content: { "database_status": "healthy" }  
+  
+Example Request:  
+GET /api/db-check HTTP/1.1  
+Host: yourservice.com   
+  
+Example Success Response:  
+{  
+"database_status": "healthy"  
+}  
 
 ---
 
-Route: /api/get-all-users
-Request Type: GET
-Purpose: Retrieves all users in the db.
+Route: /api/create-user  
+Request Type: POST  
+Purpose: Creates a new user and adds the user to the database.  
+  
+Request Body:  
+    id (String): The unique ID of the user.  
+    username (String): The username of the user.  
+    email (String): The email of the user.  
+    password (String): The password for the user.   
+  
+Response Format: JSON  
+Success Response Example:  
+Code: 201  
+Content: { "status": "success", "user": "<user_id>" }  
+  
+Example Request:  
+POST /api/create-user HTTP/1.1  
+Host: yourservice.com  
+Content-Type: application/json  
+{  
+"id": "12345",  
+"username": "johndoe",  
+"email": "johndoe@example.com",  
+"password": "securepassword"  
+}  
+  
+Example Success Response:  
+{  
+"status": "success",  
+"user": "12345"   
+}  
+  
+---
 
-Request Body:
-None
-
-Response Format: JSON
-
-Success Response Example:
-Code: 200
-Content: { "status": "success", "users": [<list_of_users>] }
-
-Example Request:
-GET /api/get-all-users HTTP/1.1
-Host: yourservice.com
-
-Example Success Response:
-{
-"status": "success",
+Route: /api/get-all-users  
+Request Type: GET  
+Purpose: Retrieves all users in the db.  
+  
+Request Body:  
+None  
+  
+Response Format: JSON  
+  
+Success Response Example:  
+Code: 200  
+Content: { "status": "success", "users": [<list_of_users>] }  
+  
+Example Request:  
+GET /api/get-all-users HTTP/1.1  
+Host: yourservice.com  
+  
+Example Success Response:  
+{  
+"status": "success",  
 "users": [
 { "id": "12345", "username": "johndoe", "email": "johndoe@example.com" },
 { "id": "67890", "username": "janedoe", "email": "janedoe@example.com" }
