@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 import re
 import sqlite3
+from unittest.mock import patch
 
 import pytest
 
@@ -47,18 +48,37 @@ def mock_cursor(mocker):
 ######################################################
 
 def test_create_user(mock_cursor):
-   """Testing creating a user with valid inputs
-   """
-   create_user(id=1, username="Username", email="example@example.com", password= "Passwords")
-   expected_query = normalize_whitespace("""
-       INSERT INTO users (username, email, password)
-       VALUES (?, ?, ?)
-   """)
-   actual_query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
-   assert actual_query == expected_query, "The SQL query did not match the expected structure."
-   actual_arguments = mock_cursor.execute.call_args[0][1]
-   expected_arguments = ("Username", "example@example.com", "Passwords")
-   assert actual_arguments == expected_arguments, f"The SQL query arguments did not match. Expected {expected_arguments}, got {actual_arguments}."
+    """Testing creating a user with valid inputs, including hashing and salting."""
+    with patch("bcrypt.gensalt") as mock_gensalt, patch("bcrypt.hashpw") as mock_hashpw:
+        # Mocking bcrypt to ensure consistent output for testing
+        mock_salt = b"mock_salt"
+        mock_hashed_password = b"mock_hashed_password"
+        mock_gensalt.return_value = mock_salt
+        mock_hashpw.return_value = mock_hashed_password
+
+        # Call the function under test
+        create_user(id=1, username="Username", email="example@example.com", password="Passwords")
+
+        # Check the SQL query
+        expected_query = normalize_whitespace("""
+            INSERT INTO users (username, email, password, salt)
+            VALUES (?, ?, ?, ?)
+        """)
+        actual_query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
+        assert actual_query == expected_query, "The SQL query did not match the expected structure."
+
+        # Check the arguments passed to the query
+        actual_arguments = mock_cursor.execute.call_args[0][1]
+        expected_arguments = (
+            "Username",
+            "example@example.com",
+            mock_hashed_password.decode("utf-8"),
+            mock_salt.decode("utf-8"),
+        )
+        assert actual_arguments == expected_arguments, (
+            f"The SQL query arguments did not match. "
+            f"Expected {expected_arguments}, got {actual_arguments}."
+        )
 
 def test_create_user_invalid_username():
    """ Testing creating a user with an invalid username
@@ -139,46 +159,52 @@ def test_get_all_users(mock_cursor):
 
 def test_update_password(mock_cursor):
     """
-    Test case for updating a user's password.
+    Test case for updating a user's password, including hashing and salting.
     """
     mock_cursor.fetchone.return_value = ["Username"]  
-    
     user_id = 1
     new_password = "newSecurePassword"
-    
-    update_password(user_id, new_password)
 
-    expected_select_query = normalize_whitespace(
-        "SELECT username FROM users WHERE id = ?"
-    )
-    actual_select_query = normalize_whitespace(
-        mock_cursor.execute.call_args_list[0][0][0]  
-    )
+    with patch("bcrypt.gensalt") as mock_gensalt, patch("bcrypt.hashpw") as mock_hashpw:
+        mock_salt = b"mock_salt"
+        mock_hashed_password = b"mock_hashed_password"
+        mock_gensalt.return_value = mock_salt
+        mock_hashpw.return_value = mock_hashed_password
 
-    assert actual_select_query == expected_select_query, (
-        f"The SELECT query did not match the expected structure. "
-        f"Expected: {expected_select_query}, got: {actual_select_query}"
-    )
+        update_password(user_id, new_password)
 
-    expected_update_query = normalize_whitespace(
-        "UPDATE users SET password = ? WHERE id = ?"
-    )
-    actual_update_query = normalize_whitespace(
-        mock_cursor.execute.call_args_list[1][0][0]  
-    )
+        expected_select_query = normalize_whitespace(
+            "SELECT username FROM users WHERE id = ?"
+        )
+        actual_select_query = normalize_whitespace(
+            mock_cursor.execute.call_args_list[0][0][0]  
+        )
+        assert actual_select_query == expected_select_query, (
+            f"The SELECT query did not match the expected structure. "
+            f"Expected: {expected_select_query}, got: {actual_select_query}"
+        )
 
-    assert actual_update_query == expected_update_query, (
-        f"The UPDATE query did not match the expected structure. "
-        f"Expected: {expected_update_query}, got: {actual_update_query}"
-    )
+        expected_update_query = normalize_whitespace(
+            "UPDATE users SET password = ?, salt = ? WHERE id = ?"
+        )
+        actual_update_query = normalize_whitespace(
+            mock_cursor.execute.call_args_list[1][0][0] 
+        )
+        assert actual_update_query == expected_update_query, (
+            f"The UPDATE query did not match the expected structure. "
+            f"Expected: {expected_update_query}, got: {actual_update_query}"
+        )
 
-    expected_arguments = (new_password, user_id)
-    actual_arguments = mock_cursor.execute.call_args_list[1][0][1]  
-
-    assert actual_arguments == expected_arguments, (
-        f"The SQL query arguments did not match. "
-        f"Expected {expected_arguments}, got {actual_arguments}."
-    )
+        expected_arguments = (
+            mock_hashed_password.decode("utf-8"),
+            mock_salt.decode("utf-8"),
+            user_id,
+        )
+        actual_arguments = mock_cursor.execute.call_args_list[1][0][1] 
+        assert actual_arguments == expected_arguments, (
+            f"The SQL query arguments did not match. "
+            f"Expected {expected_arguments}, got {actual_arguments}."
+        )
 
 
 
