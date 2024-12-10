@@ -81,22 +81,19 @@ def test_create_user(mock_cursor):
         )
 
 def test_create_user_invalid_username():
-   """ Testing creating a user with an invalid username
-   """
+   """ Testing creating a user with an invalid username"""
    with pytest.raises(ValueError, match="Invalid username type provided: 1."):
        create_user(id=1,username=1, email="example@example.com", password= "Passwords")
 
 
 def test_create_user_invalid_password():
-   """ Testing creating a user with an invalid password
-   """
+   """ Testing creating a user with an invalid password"""
    with pytest.raises(ValueError, match=r"Invalid password length: 4 \(must be longer than 8 characters\)\."):
        create_user(id=1, username="Username", email="example@example.com", password= "Pass")
 
 
 def test_create_user_invalid_email():
-   """ Testing creating a user with an invalid email
-   """
+   """ Testing creating a user with an invalid email"""
    with pytest.raises(ValueError, match="Invalid email."):
        create_user(id=1,username="Username", email="example.com", password= "Passwords")
   
@@ -104,13 +101,8 @@ def test_create_user_invalid_email():
        create_user(id=1, username="Username", email=1, password= "Passwords")
 
 
-
-
-
-
 def test_create_user_duplicate(mock_cursor):
-   """ Testing creating a duplicate user
-   """
+   """ Testing creating a duplicate user"""
    mock_cursor.execute.side_effect = sqlite3.IntegrityError("UNIQUE constraint failed: user.username, user.email, user.password")
 
    with pytest.raises(ValueError, match="Username 'Username' already exists."):
@@ -124,8 +116,7 @@ def test_create_user_duplicate(mock_cursor):
 #
 ######################################################
 def test_get_all_users(mock_cursor):
-   """ Testing if we can get all users
-   """
+   """ Testing if we can get all users"""
    mock_cursor.fetchall.return_value = [
        (1, "user A", "emailA@gmail.com", "PasswordA"),
        (2, "user B", "emailB@gmail.com", "PasswordB"),

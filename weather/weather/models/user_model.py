@@ -86,7 +86,7 @@ def get_all_users() -> list[dict]:
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            logger.info("Attempting to retrieve all non-deleted songs from the catalog")
+            logger.info("Attempting to retrieve all non-users from the db")
 
             # Determine the sort order based on the 'sort_by_play_count' flag
             query = """

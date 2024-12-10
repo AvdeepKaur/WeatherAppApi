@@ -2,6 +2,13 @@ import pytest
 import sqlite3
 from weather.models.favorites_model import FavoritesModel
 
+
+######################################################
+#
+#    Fixtures
+#
+######################################################
+
 @pytest.fixture
 def db_path(tmp_path):
     """Fixture to provide a temporary database path."""
