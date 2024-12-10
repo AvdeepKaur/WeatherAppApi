@@ -167,7 +167,7 @@ def update_username(id: int, new_username: str) -> None:
                 logger.info("User with ID %d not found", id)
                 raise ValueError(f"No user found with id {id}.")
 
-            cursor.execute("UPDATE username SET username = %s WHERE id = %s", (new_username, id))
+            cursor.execute("UPDATE users SET username = ? WHERE id = ?", (new_username, id))
             conn.commit()
 
             logger.info("Username updated for user with ID: %d", id)

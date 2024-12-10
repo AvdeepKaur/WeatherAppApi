@@ -4,7 +4,7 @@
 BASE_URL="http://localhost:5001/api"
 
 # Flag to control whether to echo JSON output
-ECHO_JSON=false
+ECHO_JSON=true
 
 # Parse command-line arguments
 while [ "$#" -gt 0 ]; do
@@ -77,8 +77,7 @@ get_all_users() {
   if echo "$response" | grep -q '"status": "success"'; then
     echo "All users retrieved successfully."
     if [ "$ECHO_JSON" = true ]; then
-      echo "Users JSON:"
-      echo "$response" | jq .
+      echo "$response"
     fi
   else
     echo "Failed to get users."
@@ -91,17 +90,17 @@ update_password() {
   new_password=$2
 
   echo "Updating password for user with ID $id..."
-  response=$(curl -s -X PUT "$BASE_URL/api/update-password" -H "Content-Type: application/json" \
+  response=$(curl -s -X PUT "$BASE_URL/update-password" -H "Content-Type: application/json" \
     -d "{\"id\": $id, \"new_password\": \"$new_password\"}")
 
   if echo "$response" | grep -q '"status": "success"'; then
     echo "Password updated successfully for user ID $id."
     if [ "$ECHO_JSON" = true ]; then
       echo "Response JSON:"
-      echo "$response" | jq .
+      echo "$response" .
     fi
   elif echo "$response" | grep -q '"error":'; then
-    error_message=$(echo "$response" | jq -r '.error')
+    error_message=$(echo "$response")
     echo "Failed to update password: $error_message"
     exit 1
   else
@@ -115,17 +114,17 @@ update_username() {
   new_username=$2
 
   echo "Updating username for user with ID $id..."
-  response=$(curl -s -X PUT "$BASE_URL/api/update-username" -H "Content-Type: application/json" \
+  response=$(curl -s -X PUT "$BASE_URL/update-username" -H "Content-Type: application/json" \
     -d "{\"id\": $id, \"new_username\": \"$new_username\"}")
 
   if echo "$response" | grep -q '"status": "success"'; then
     echo "Username updated successfully for user ID $id."
     if [ "$ECHO_JSON" = true ]; then
       echo "Response JSON:"
-      echo "$response" | jq .
+      echo "$response"
     fi
   elif echo "$response" | grep -q '"error":'; then
-    error_message=$(echo "$response" | jq -r '.error')
+    error_message=$(echo "$response")
     echo "Failed to update username: $error_message"
     exit 1
   else
@@ -160,9 +159,10 @@ get_favorite_locations() {
         echo "Favorite locations retrieved successfully."
         if [ "$ECHO_JSON" = true ]; then
             echo "Locations JSON:"
-            echo "$response" | jq .
+            echo "$response"
         fi
     else
+        echo $response
         echo "Failed to get favorite locations."
         exit 1
     fi
@@ -171,10 +171,11 @@ get_favorite_locations() {
 update_weather_data() {
     user_id=$1
     echo "Updating weather data for user $user_id..."
-    curl -s -X POST "$BASE_URL/update-weather-data/$user_id" | grep -q '"status": "success"'
-    if [ $? -eq 0 ]; then
+    response=$(curl -s -X POST "$BASE_URL/update_weather_data/$user_id")
+    if echo "$response" | grep -q '"status": "success"'; then
         echo "Weather data updated successfully."
     else
+        echo "$response"
         echo "Failed to update weather data."
         exit 1
     fi
@@ -190,6 +191,12 @@ add_user 2 "JaneSmith" "jsmith@example.com" "securepass456"
 
 # Get all users
 get_all_users
+
+#update a password
+update_password 1 "123password"
+
+#update an username
+update_username 2 "JennyLi"
 
 # Add favorite locations
 add_favorite_location 1 "New York"

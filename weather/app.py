@@ -12,9 +12,10 @@ load_dotenv()
 app = Flask(__name__)
 
 ##playlist_model = PlaylistModel()
-favorites_model = FavoritesModel()
+# favorites_model = FavoritesModel()
 
-favorites_model = FavoritesModel()
+# favorites_model = FavoritesModel()
+favorites_model = FavoritesModel('./db/user_catalog.db')
 
 
 ####################################################
@@ -107,7 +108,7 @@ def add_user() -> Response:
         return make_response(jsonify({'error': str(e)}), 500)
 
 @app.route('/api/get-all-users', methods=['GET'])
-def get_all_users() -> Response:
+def get_all_the_users() -> Response:
     """
     Route to retrieve all users in the db.
 
@@ -118,13 +119,13 @@ def get_all_users() -> Response:
         app.logger.info("Retrieving all users from the db")
         users = get_all_users()
 
-        return make_response(jsonify({'status': 'success', 'users': users}), 200)
+        return jsonify({'status': 'success', 'Users': users}), 200
     except Exception as e:
         app.logger.error(f"Error retrieving users: {e}")
-        return make_response(jsonify({'error': str(e)}), 500)
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/update-password', methods=['PUT'])
-def update_password() -> Response:
+def update_user_password() -> Response:
     """
     Route to update passwords 
 
@@ -163,10 +164,10 @@ def update_password() -> Response:
 
     except Exception as e:
         app.logger.error("An unexpected error occurred: %s", str(e))
-        return make_response(jsonify({'error': 'An unexpected error occurred.'}), 500)
+        return make_response(jsonify({'error': 'An unexpected error occurred.', 'details': str(e)}), 500)
 
 @app.route('/api/update-username', methods=['PUT'])
-def update_username() -> Response:
+def update_user_username() -> Response:
     """
     Route to update passwords 
 
@@ -205,7 +206,7 @@ def update_username() -> Response:
 
     except Exception as e:
         app.logger.error("An unexpected error occurred: %s", str(e))
-        return make_response(jsonify({'error': 'An unexpected error occurred.'}), 500)
+        return make_response(jsonify({'error': 'An unexpected error occurred.', 'details': str(e)}), 500)
 
 
 ############################################################
@@ -215,6 +216,25 @@ def update_username() -> Response:
 ############################################################
 
 
+# @app.route('/api/add-favorite-location', methods=['POST'])
+# def add_favorite_location() -> Response:
+#     try:
+#         data = request.get_json()
+#         user_id = data.get('user_id')
+#         location = data.get('location')
+
+#         if not user_id or not location:
+#             return make_response(jsonify({'error': 'User ID and location are required.'}), 400)
+
+#         favorites_model.add_favorite_location(user_id, location)
+
+#         app.logger.info(f"Added favorite location {location} for user {user_id}")
+#         return make_response(jsonify({'status': 'success', 'message': 'Location added to favorites.'}), 201)
+
+#     except Exception as e:
+#         app.logger.error(f"Error adding favorite location: {e}")
+#         return make_response(jsonify({'error': str(e)}), 500)
+
 @app.route('/api/add-favorite-location', methods=['POST'])
 def add_favorite_location() -> Response:
     try:
@@ -223,17 +243,21 @@ def add_favorite_location() -> Response:
         location = data.get('location')
 
         if not user_id or not location:
-            return make_response(jsonify({'error': 'User ID and location are required.'}), 400)
+            return jsonify({'error': 'User ID and location are required.'}), 400
 
-        favorites_model.add_favorite_location(user_id, location)
+        try:
+            favorites_model.get_user(user_id)  # This will raise ValueError if user not found
+            favorites_model.add_favorite_location(user_id, location)
+        except ValueError as ve:
+            app.logger.error(f"Error adding favorite location: {ve}")
+            return jsonify({'error': str(ve)}), 404
 
-        logger.info(f"Added favorite location {location} for user {user_id}")
-        return make_response(jsonify({'status': 'success', 'message': 'Location added to favorites.'}), 201)
+        app.logger.info(f"Added favorite location {location} for user {user_id}")
+        return jsonify({'status': 'success', 'message': 'Location added to favorites.'}), 201
 
     except Exception as e:
-        logger.error(f"Error adding favorite location: {e}")
-        return make_response(jsonify({'error': str(e)}), 500)
-
+        app.logger.error(f"Error adding favorite location: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/remove-favorite-location', methods=['DELETE'])
 def remove_favorite_location() -> Response:
@@ -247,29 +271,25 @@ def remove_favorite_location() -> Response:
 
         favorites_model.remove_favorite_location(user_id, location)
 
-        logger.info(f"Removed favorite location {location} for user {user_id}")
+        app.logger.info(f"Removed favorite location {location} for user {user_id}")
         return make_response(jsonify({'status': 'success', 'message': 'Location removed from favorites.'}), 200)
 
     except Exception as e:
-        logger.error(f"Error removing favorite location: {e}")
+        app.logger.error(f"Error removing favorite location: {e}")
         return make_response(jsonify({'error': str(e)}), 500)
 
 
-@app.route('/api/get-favorite-locations', methods=['GET'])
-def get_favorite_locations() -> Response:
+@app.route('/api/get-favorite-locations/<int:user_id>', methods=['GET'])
+def get_favorite_locations(user_id: int) -> Response:
     try:
-        user_id = request.args.get('user_id', type=int)
-
-        if not user_id:
-            return make_response(jsonify({'error': 'User ID is required.'}), 400)
-
         locations = favorites_model.get_favorite_locations(user_id)
-
-        return make_response(jsonify({'favorite_locations': locations}), 200)
-
+        return jsonify({'status': 'success', 'favorite_locations': locations}), 200
+    except ValueError as ve:
+        app.logger.error(f"Error getting favorite locations: {ve}")
+        return jsonify({'error': str(ve)}), 404
     except Exception as e:
-        logger.error(f"Error getting favorite locations: {e}")
-        return make_response(jsonify({'error': str(e)}), 500)
+        app.logger.error(f"Error getting favorite locations: {e}")
+        return jsonify({'error': 'An unexpected error occurred.'}), 500
 
 
 @app.route('/api/get_favorites_length', methods=['GET'])
@@ -279,27 +299,25 @@ def get_favorites_length() -> Response:
         return make_response(jsonify({'favorites_length': length}), 200)
 
     except Exception as e:
-        logger.error(f"Error getting favorites length: {e}")
+        app.logger.error(f"Error getting favorites length: {e}")
         return make_response(jsonify({'error': str(e)}), 500)
 
 
-@app.route('/api/update_weather_data', methods=['PUT'])
-def update_weather_data() -> Response:
+@app.route('/api/update_weather_data/<int:user_id>', methods=['POST'])
+def update_weather_data(user_id) -> Response:
     try:
-        data = request.get_json()
-        user_id = data.get('user_id')
-
-        if not user_id:
-            return make_response(jsonify({'error': 'User ID is required.'}), 400)
-
         favorites_model.update_weather_data(user_id)
 
-        logger.info(f"Weather data updated for user {user_id}")
-        return make_response(jsonify({'status': 'success', 'message': 'Weather data updated.'}), 200)
+        app.logger.info(f"Weather data updated for user {user_id}")
+        return jsonify({'status': 'success', 'message': 'Weather data updated.'}), 200
+
+    except ValueError as ve:
+        app.logger.error(f"Error updating weather data: {ve}")
+        return jsonify({'error': str(ve)}), 404
 
     except Exception as e:
-        logger.error(f"Error updating weather data: {e}")
-        return make_response(jsonify({'error': str(e)}), 500)
+        app.logger.error(f"Error updating weather data: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/check-if-empty', methods=['GET'])
@@ -309,7 +327,7 @@ def check_if_empty() -> Response:
         return make_response(jsonify({'status': 'success', 'message': 'Favorites are not empty.'}), 200)
 
     except Exception as e:
-        logger.error(f"Error checking if empty: {e}")
+        app.logger.error(f"Error checking if empty: {e}")
         return make_response(jsonify({'error': str(e)}), 500)
 
 
