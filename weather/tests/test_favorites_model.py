@@ -107,7 +107,7 @@ def test_update_weather_data(favorites_model, sample_user1, sample_location1, mo
 # Utility Function Test Cases
 ##################################################
 
-def test_check_if_empty_with_full_favorites(favorites_model, sample_user1, sample_location1):
+def test_check_if_empty_with_full_favorites(favorites_model, sample_location1):
     """Test check_if_empty does not raise error if favorites is not empty."""
     favorites_model.add_favorite_location(1, sample_location1)
     try:

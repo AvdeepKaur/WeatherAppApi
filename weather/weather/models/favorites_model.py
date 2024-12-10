@@ -233,8 +233,13 @@ class FavoritesModel:
         Checks if there are any users with favorite locations.
 
         Raises:
-            ValueError: If there are no users or no favorite locations.
+            ValueError: If there are no favorite locations.
         """
-        if not self.users or all(len(user.favorite_locations) == 0 for user in self.users):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM user_favorites")
+            count = cursor.fetchone()[0]
+
+        if count == 0:
             logger.error("No favorite locations found")
             raise ValueError("No favorite locations found")
