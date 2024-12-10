@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import re
 import sqlite3
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -11,6 +11,7 @@ from weather.models.user_model import (
     get_all_users,
     update_password,
     update_username,
+    login_user
 )
 
 ######################################################
@@ -108,7 +109,46 @@ def test_create_user_duplicate(mock_cursor):
    with pytest.raises(ValueError, match="Username 'Username' already exists."):
        create_user(id=1, username="Username", email="example@example.com", password= "Passwords")
 
+def test_login_user_successful(mock_cursor):
+    """Testing login for users"""
+    with patch("weather.models.user_model.get_db_connection") as mock_get_db_connection, \
+         patch("bcrypt.hashpw") as mock_hashpw:
+        
+        mock_conn = MagicMock()
+        mock_get_db_connection.return_value.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        
+        mock_cursor.fetchone.return_value = ('hashed_password', 'salt')
+        
+        mock_hashpw.return_value = b'hashed_password'
+        
+        result = login_user('testuser', 'testpassword')
+        
+        assert result == True
+        
+        mock_cursor.execute.assert_called_once_with("SELECT password, salt FROM users WHERE username = ?", ('testuser',))
+        mock_hashpw.assert_called_once_with(b'testpassword', b'salt')
 
+def test_login_user_invalid_credentials(mock_cursor):
+    """Testing invalid login to raise errors"""
+    with patch("weather.models.user_model.get_db_connection") as mock_get_db_connection, \
+         patch("bcrypt.hashpw") as mock_hashpw:
+        
+        mock_conn = MagicMock()
+        mock_get_db_connection.return_value.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        
+        mock_cursor.fetchone.return_value = ('hashed_password', 'salt')
+        
+        mock_hashpw.return_value = b'wrong_password'
+        
+        result = login_user('testuser', 'wrong_password')
+        
+        assert result == False
+        
+        mock_cursor.execute.assert_called_once_with("SELECT password, salt FROM users WHERE username = ?", ('testuser',))
+        
+        mock_hashpw.assert_called_once_with(b'wrong_password', b'salt')
 
 #####################################################
 #

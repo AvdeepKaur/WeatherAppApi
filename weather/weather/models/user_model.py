@@ -72,6 +72,49 @@ def create_user(id: str, username: str, email: str, password: str) -> None:
         logger.error("Database error while creating user: %s", str(e))
         raise sqlite3.Error(f"Database error: {str(e)}")
 
+def login_user(username: str, password: str) -> bool:
+    """
+    Verifies a user's login credentials.
+
+    Args:
+        username (str): The username of the user trying to log in.
+        password (str): The password provided by the user.
+
+    Returns:
+        bool: True if the login is successful, False otherwise.
+
+    Raises:
+        ValueError: If username or password is invalid.
+        sqlite3.Error: If there is a database error.
+    """
+    if not isinstance(username, str) or not username.strip():
+        raise ValueError("Invalid or empty username provided.")
+    if not isinstance(password, str) or not password.strip():
+        raise ValueError("Invalid or empty password provided.")
+
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""SELECT password, salt FROM users WHERE username = ?""", (username,))
+            result = cursor.fetchone()
+
+            if not result:
+                logger.warning("Username '%s' does not exist.", username)
+                return False
+
+            stored_password, salt = result
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt.encode('utf-8'))
+
+            if hashed_password.decode('utf-8') == stored_password:
+                logger.info("Login successful for user: %s", username)
+                return True
+            else:
+                logger.warning("Invalid password for user: %s", username)
+                return False
+
+    except sqlite3.Error as e:
+        logger.error("Database error during login: %s", str(e))
+        raise sqlite3.Error(f"Database error: {str(e)}")
 
 def get_all_users() -> list[dict]:
     """
